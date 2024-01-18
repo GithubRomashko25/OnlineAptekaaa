@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delivery Profile</title>
+    <link rel="stylesheet" href="profile.css">
+</head>
+<body>
+
+    <div class="header">
+        <div class="user-info">
+            <span id="username"></span>
+            <button onclick="redirectToProfile(getCookie('role'))">Profile</button>
+        </div>
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <div class="container" id="ordersContainer">
+        <h1>Orders</h1>
+    </div>
+
+    <script>
+    var xhrOrders = new XMLHttpRequest();
+    xhrOrders.open("GET", "get_delivery_orders.php", true);
+    xhrOrders.onreadystatechange = function() {
+        if (xhrOrders.readyState == 4) {
+            if (xhrOrders.status == 200) {
+                try {
+                    var orders = JSON.parse(xhrOrders.responseText);
+                    console.log(orders); // Выводим данные о заказах в консоль
+                    createOrders(orders);
+                } catch (error) {
+                    console.error("Error parsing JSON:", error);
+                }
+            } else {
+                console.error("Error loading orders. Status:", xhrOrders.status);
+                console.log("Response text:", xhrOrders.responseText); // Выводим текст ответа в консоль
+            }
+        }
+    };
+    xhrOrders.send();
+
+    // Функция для создания элементов заказов
+    function createOrders(orders) {
+        var ordersContainer = document.getElementById('ordersContainer');
+        orders.forEach(function(order) {
+            var orderElement = document.createElement('div');
+            orderElement.classList.add('order');
+
+            var itemName = document.createElement('h2');
+            itemName.innerText = 'Item: ' + order.item_name;
+
+            var itemPrice = document.createElement('p');
+            itemPrice.innerText = 'Price: $' + order.price;
+
+            var orderStatus = document.createElement('p');
+            orderStatus.innerText = 'Status: ' + order.status;
+
+            var changeStatusButton = document.createElement('button');
+            changeStatusButton.innerText = 'Change Status';
+            changeStatusButton.addEventListener('click', function() {
+                changeOrderStatus(order.order_id, order.status);
+            });
+
+            orderElement.appendChild(itemName);
+            orderElement.appendChild(itemPrice);
+            orderElement.appendChild(orderStatus);
+            orderElement.appendChild(changeStatusButton);
+
+            ordersContainer.appendChild(orderElement);
+        });
+    }
+
+    // Функция для изменения статуса заказа
+    function changeOrderStatus(orderId, currentStatus) {
+        var newStatus = (currentStatus === 'Created') ? 'In process' : 'Done';
+        var xhrChangeStatus = new XMLHttpRequest();
+        xhrChangeStatus.open("POST", "change_order_status.php", true);
+        xhrChangeStatus.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xhrChangeStatus.withCredentials = true;
+        xhrChangeStatus.onreadystatechange = function() {
+            if (xhrChangeStatus.readyState == 4) {
+                if (xhrChangeStatus.status == 200) {
+                    alert('Order status changed successfully!');
+                    // Обновляем страницу после изменения статуса
+                    location.reload();
+                } else {
+                    alert('Error changing order status. Please try again.');
+                }
+            }
+        };
+        xhrChangeStatus.send(JSON.stringify({ order_id: orderId, new_status: newStatus }));
+    }
+
+    </script>
+
+</body>
+</html>

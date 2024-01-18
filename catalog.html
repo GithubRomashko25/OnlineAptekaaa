@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catalog</title>
+    <link rel="stylesheet" href="catalog.css">
+</head>
+<body>
+
+    <div class="header">
+        <div class="user-info">
+            <span id="username"></span>
+            <button onclick="redirectToProfile(getCookie('role'))">Profile</button>
+        </div>
+
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <div class="container" id="catalogContainer">
+        <h1>Catalog</h1>
+    </div>
+
+    <script>
+    // Функция для получения значения куки по имени
+    function getCookie(name) {
+        var match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+        if (match) {
+            return match[2];
+        } else {
+            return null;
+        }
+    }
+
+    // Функция для выхода из системы
+    function logout() {
+        // Удаляем куки и перенаправляем на страницу входа
+        document.cookie = 'user_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        document.cookie = 'role=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        document.cookie = 'username=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        window.location.href = "login.html";
+    }
+
+    // Загрузка данных о предметах из базы данных с использованием AJAX
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "catalog.php", true);
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4) {
+            console.log(xhr.status); // Выводим статус запроса в консоль
+            if (xhr.status == 200) {
+                try {
+                    var items = JSON.parse(xhr.responseText);
+                    console.log(items); // Выводим данные о предметах в консоль
+                    createCatalog(items);
+                } catch (error) {
+                    console.error("Error parsing JSON:", error);
+                }
+            } else {
+                console.error("Error loading items. Status:", xhr.status);
+                console.log("Response text:", xhr.responseText); // Выводим текст ответа в консоль
+            }
+        }
+    };
+    xhr.send();
+
+    // Функция для создания элементов каталога
+    function createCatalog(items) {
+        // Проверяем наличие куки "user_id" и отображаем имя пользователя
+        var userId = getCookie('login');
+        var role = getCookie('role');
+        if (userId && userId !== '' && role && role !== '') {
+            var usernameSpan = document.getElementById('username');
+            usernameSpan.innerText = 'User: ' + userId + ' (Role: ' + role + ')';
+        } else {
+            // Перенаправляем на страницу входа, если куки отсутствуют или пусты
+            window.location.href = "login.html";
+            return; // Завершаем функцию, чтобы избежать дальнейшего выполнения кода
+        }
+
+        var catalogContainer = document.getElementById('catalogContainer');
+        items.forEach(function(item) {
+            var itemElement = document.createElement('div');
+            itemElement.classList.add('item');
+
+            var itemName = document.createElement('h2');
+            itemName.innerText = item.name;
+
+            var itemPrice = document.createElement('p');
+            itemPrice.innerText = 'Price: $' + item.price;
+
+            var buyButton = document.createElement('button');
+            buyButton.innerText = 'Buy';
+            buyButton.id = 'buyButton_' + item.id; // Уникальный идентификатор для каждого товара
+            buyButton.addEventListener('click', function() {
+                buyItem(item.id); // Вызываем функцию покупки товара
+            });
+
+            itemElement.appendChild(itemName);
+            itemElement.appendChild(itemPrice);
+            itemElement.appendChild(buyButton);
+
+            catalogContainer.appendChild(itemElement);
+        });
+    }
+
+    // Функция для перехода на страницу профиля в зависимости от роли
+    function redirectToProfile(role) {
+        console.log('Redirecting to profile for role:', role);
+        switch (role) {
+            case 'Admin':
+            case 'PManager':
+                window.location.href = 'admin_profile.html';
+                break;
+            case 'DeliveryBoy':
+                window.location.href = 'delivery_profile.html';
+                break;
+            case 'Customer':
+                window.location.href = 'customer_profile.html';
+                break;
+            default:
+                console.log('Role not recognized:', role);
+                // Добавьте код для других ролей, если необходимо
+                break;
+        }
+    }
+
+
+    function openCart() {
+        window.location.href = 'cart.html'; // Перенаправление на страницу корзины
+    }
+
+    // Функция для покупки товара
+    function buyItem(itemId) {
+        var userId = getCookie('user_id');
+        var order = {
+            user_id: userId,
+            items: [itemId]
+        };
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "buy_item.php", true);
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xhr.withCredentials = true;
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState == 4) {
+                if (xhr.status == 200) {
+                    alert('Item purchased successfully!');
+                } else {
+                    alert('Error purchasing item. Please try again.');
+                }
+            }
+        };
+        xhr.send(JSON.stringify(order));
+    }
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Profile</title>
+    <link rel="stylesheet" href="profile.css">
+</head>
+<body>
+
+    <div class="header">
+        <div class="user-info">
+            <span id="username"></span>
+            <button onclick="redirectToProfile()">Profile</button>
+        </div>
+
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <div class="container" id="profileContainer">
+        <h1>Customer Profile</h1>
+        <h2>Orders</h2>
+        <ul id="ordersList"></ul>
+    </div>
+
+    <script>
+        // Функция для получения значения куки по имени
+        function getCookie(name) {
+            var match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            return match ? match[2] : null;
+        }
+
+        // Функция для выхода из системы
+        function logout() {
+            // Удаляем куки и перенаправляем на страницу входа
+            document.cookie = 'user_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            document.cookie = 'role=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            document.cookie = 'username=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            window.location.href = "login.html";
+        }
+
+        // Проверяем наличие куки "user_id" и отображаем имя пользователя
+        var userId = getCookie('user_id');
+        var role = getCookie('role');
+        if (userId && userId !== '' && role && role !== '') {
+            var usernameSpan = document.getElementById('username');
+            usernameSpan.innerText = 'User: ' + userId + ' (Role: ' + role + ')';
+        } else {
+            // Перенаправляем на страницу входа, если куки отсутствуют или пусты
+            window.location.href = "login.html";
+        }
+
+        // Загрузка заказов пользователя из базы данных
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", "get_orders.php", true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState == 4 && xhr.status == 200) {
+                try {
+                    var orders = JSON.parse(xhr.responseText);
+                    displayOrders(orders);
+                } catch (error) {
+                    console.error("Error parsing JSON:", error);
+                }
+            } else if (xhr.readyState == 4) {
+                console.error("Error loading orders. Status:", xhr.status);
+                console.log("Response text:", xhr.responseText);
+            }
+        };
+        xhr.send();
+
+        // Функция для отображения заказов
+        function displayOrders(orders) {
+            var ordersList = document.getElementById('ordersList');
+            if (orders.length > 0) {
+                orders.forEach(function(order) {
+                    var orderItem = document.createElement('li');
+                    orderItem.innerText = 'Item: ' + order.item_name + ', Price: $' + order.price + ', Status: ' + order.status;
+                    ordersList.appendChild(orderItem);
+                });
+            } else {
+                var noOrdersItem = document.createElement('li');
+                noOrdersItem.innerText = 'No orders available.';
+                ordersList.appendChild(noOrdersItem);
+            }
+        }
+
+        function redirectToProfile() {
+            switch (role) {
+                case 'Admin':
+                case 'PManager':
+                    window.location.href = 'admin_profile.html';
+                    break;
+                case 'DeliveryBoy':
+                    window.location.href = 'delivery_profile.html';
+                    break;
+                case 'Customer':
+                    window.location.href = 'customer_profile.html';
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        function openCart() {
+            window.location.href = 'cart.html';
+        }
+    </script>
+
+</body>
+</html>

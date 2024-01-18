@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart</title>
+    <link rel="stylesheet" href="catalog.css">
+</head>
+<body>
+
+    <div class="header">
+        <div class="user-info">
+            <span id="username"></span>
+            <button onclick="openProfile()">Profile</button>
+        </div>
+        <button onclick="openCart()">Cart</button>
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <div class="container" id="cartContainer">
+        <h1>Shopping Cart</h1>
+        <div id="cartItems"></div>
+        <button onclick="checkout()">Checkout</button>
+    </div>
+
+    <script>
+        function getCookie(name) {
+            var match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            return match ? match[2] : null;
+        }
+
+        function setCartItems(cartItems) {
+            document.cookie = 'cartItems=' + JSON.stringify(cartItems) + '; path=/; samesite=none; secure';
+        }
+
+        function getCartItems() {
+            var cartItems = getCookie('cartItems');
+            return cartItems ? JSON.parse(cartItems) : [];
+        }
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", "get_cart_items.php", true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState == 4 && xhr.status == 200) {
+                console.log(xhr.responseText); // Выводим ответ сервера в консоль для отладки
+                var cartItems = JSON.parse(xhr.responseText);
+                displayCartItems(cartItems);
+            }
+        };
+        xhr.send();
+
+        function displayCartItems(cartItems) {
+            var cartContainer = document.getElementById('cartItems');
+            cartContainer.innerHTML = ''; // Очищаем контейнер перед отображением
+
+            if (cartItems.length > 0) {
+                var ul = document.createElement('ul');
+                cartItems.forEach(function(itemId) {
+                    var li = document.createElement('li');
+                    li.innerText = 'Item ID: ' + itemId;
+                    ul.appendChild(li);
+                });
+                cartContainer.appendChild(ul);
+            } else {
+                cartContainer.innerHTML = '<p>No items in the cart</p>';
+            }
+        }
+
+        function checkout() {
+            var cartItems = getCartItems();
+            if (cartItems.length > 0) {
+                var userId = getCookie('user_id');
+                var order = {
+                    user_id: userId,
+                    items: cartItems
+                };
+
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "checkout.php", true);
+                xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                xhr.withCredentials = true;
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState == 4 && xhr.status == 200) {
+                        alert('Order placed successfully!');
+                        setCartItems([]);
+                    }
+                };
+                xhr.send(JSON.stringify(order));
+            } else {
+                alert('Your cart is empty. Add items before checkout.');
+            }
+        }
+    </script>
+
+</body>
+</html>

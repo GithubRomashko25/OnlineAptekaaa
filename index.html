@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div class="container">
+        <h1>Registration</h1>
+
+        <form action="register.php" method="post">
+            <input type="text" name="login" placeholder="Login" required><br><br>
+            <input type="text" name="address" placeholder="Address" required><br><br>
+            <input type="text" name="bitcoin" placeholder="Bitcoin wallet" required><br><br>
+            <input type="password" name="password" placeholder="Password" required>
+            <input type="password" name="confirmPassword" placeholder="Confirm Password" required>
+            <button type="button" id="togglePasswordBtn" onclick="togglePassword()">👁</button><br><br>
+            <button type="submit">Register</button>
+        </form>
+
+        <p class="small-text">If you already have an account, <a href="login.html" onclick="showLogin()">login</a>.</p>
+    </div>
+
+    <script>
+        function togglePassword() {
+            var passwordField = document.getElementsByName("password")[0];
+            var confirmPasswordField = document.getElementsByName("confirmPassword")[0];
+
+            passwordField.type = (passwordField.type === "password") ? "text" : "password";
+            confirmPasswordField.type = (confirmPasswordField.type === "password") ? "text" : "password";
+        }
+
+        function showLogin() {
+            alert("Redirecting to login page...");
+            // Add code to redirect to the login page or display the login modal
+        }
+    </script>
+
+</body>
+</html>
